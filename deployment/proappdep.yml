@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proapp
+  labels: 
+    app: proapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proapp
+  template:
+    metadata:
+      labels:
+        app: proapp
+    spec:
+      containers:
+      - name: proapp
+        image: mohamedsharaf92/projectapp
+        ports:
+        - name: proapp-port
+          containerPort: 8080
+      initContainers:
+      - name: init-mydb
+        image: busybox
+        command: ['sh', '-c', 'until nslookup projectdb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+      - name: init-memcache
+        image: busybox
+        command: ['sh', '-c', 'until nslookup projectcashe.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']

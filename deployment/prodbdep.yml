@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appproject
+  labels:
+    app: prodb
+spec:
+  selector:
+    matchLabels:
+      app: prodb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: prodb
+    spec:
+      containers:
+      - name: prodb
+        image: mohamedsharaf92/projectdb
+          #args:
+          #- "--ignore-db-dir"
+          #- "lost+found"
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: pro-db-data
+        ports:
+        - name: prodb-port
+          containerPort: 3306
+        env:
+         - name: MYSQL_ROOT_PASSWORD
+           valueFrom:
+             secretKeyRef:
+               name: app-secret
+               key: db-pass
+      nodeSelector:
+        zone: us-east-1a
+      volumes:
+        - name: pro-db-data
+          # This AWS EBS volume must already exist.
+          awsElasticBlockStore:
+             volumeID: vol-0bcd6bddaa2c94232
+             fsType: ext4
+
+      initContainers:
+        - name: busybox
+          image: busybox:latest
+          args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+          volumeMounts:
+            - name: pro-db-data
+              mountPath: /var/lib/mysql
